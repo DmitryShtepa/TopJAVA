@@ -24,29 +24,12 @@ public class MealsUtil {
                 new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
         );
 
-        List<MealTo> mealsTo = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        List<MealTo> mealsTo = filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
         mealsTo.forEach(System.out::println);
 
-//        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
-    }
-
-    public static List<MealTo> filteredByCycles(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO return filtered list with excess. Implement by cycles
-        Map<LocalDate, Integer> caloriesSumByDate = new HashMap<>();
-        meals.forEach(meal -> caloriesSumByDate.merge(meal.getDate(), meal.getCalories(), Integer::sum));
-
-        List<MealTo> result = new ArrayList<>();
-        meals.forEach(meal -> {
-            if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
-                result.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                        caloriesSumByDate.get(meal.getDate()) > caloriesPerDay));
-            }
-        });
-        return result;
     }
 
     public static List<MealTo> filteredByStreams(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO Implement by streams
         Map<LocalDate, Integer> caloriesSumByDate = meals.stream()
                 .collect(
                         Collectors.groupingBy(Meal::getDate, Collectors.summingInt(Meal::getCalories)));
@@ -55,8 +38,11 @@ public class MealsUtil {
         return meals
                 .stream()
                 .filter(meal -> isBetweenHalfOpen(meal.getTime(), startTime, endTime))
-                .map(meal -> new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                        caloriesSumByDate.get(meal.getDate()) > caloriesPerDay))
+                .map(meal -> creatTo(meal, caloriesSumByDate.get(meal.getDate()) > caloriesPerDay))
                 .collect(Collectors.toList());
+    }
+
+    private static MealTo creatTo(Meal meal, boolean excess) {
+        return new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(), excess);
     }
 }
